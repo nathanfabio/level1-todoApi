@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/jmoiron/sqlx"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func Connect() *sqlx.DB {
@@ -12,13 +13,13 @@ func Connect() *sqlx.DB {
 		log.Fatal("Failed to connect to database:", err)
 	}
 
-	defer db.Close()
+	
 
 	schema := `CREATE TABLE IF NOT EXISTS tasks (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		title TEXT NOT NULL,
 		done BOOLEAN NOT NULL DEFAULT false,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`
 
 	db.MustExec(schema)
 	return db

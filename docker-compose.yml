@@ -1,0 +1,8 @@
+services:
+  app:
+    build: .
+    ports:
+      - "7070:7070"
+    volumes:
+      - .:/app
+    command: go run cmd/server/main.go

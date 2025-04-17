@@ -23,3 +23,8 @@ func (r *TaskRepository) GetAll() ([]model.Task, error) {
 	err := r.db.Select(&tasks, "SELECT * FROM tasks ORDER BY created_at DESC")
 	return tasks, err
 }
+
+func (r *TaskRepository) UpdateStatus(id int, done bool) error {
+	_, err := r.db.Exec(`UPDATE tasks SET done = ? WHERE id = ?`, done, id)
+	return err
+}

@@ -25,6 +25,7 @@ func main() {
 
 	r.Post("/tasks", taskHandler.CreateTask)
 	r.Get("/tasks", taskHandler.ListTasks)
+	r.Put("/tasks/{id}/status", taskHandler.UpdateTaskStatus)
 
 
 	log.Println("Starting server on :7070")

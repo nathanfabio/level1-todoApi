@@ -4,10 +4,16 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/nathanfabio/level1-todoApi/internal/model"
 	"github.com/nathanfabio/level1-todoApi/internal/repository"
 )
+
+type statusUpdate struct {
+	Done bool `json:"done"`
+}
 
 type TaskHandler struct {
 	Repo *repository.TaskRepository
@@ -42,4 +48,29 @@ func (h *TaskHandler) ListTasks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(tasks)
+}
+
+func (h *TaskHandler) UpdateTaskStatus(w http.ResponseWriter, r *http.Request) {
+	idParam := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		return
+	}
+
+	var input statusUpdate
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.Repo.UpdateStatus(id, input.Done); err != nil {
+		http.Error(w, "Failed to update task status", http.StatusInternalServerError)
+		log.Printf("Error updating task status: %v", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+
 }

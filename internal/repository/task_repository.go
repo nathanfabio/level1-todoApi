@@ -28,3 +28,28 @@ func (r *TaskRepository) UpdateStatus(id int, done bool) error {
 	_, err := r.db.Exec(`UPDATE tasks SET done = ? WHERE id = ?`, done, id)
 	return err
 }
+
+func (r *TaskRepository) Delete(id int) error {
+	_, err := r.db.Exec(`DELETE FROM tasks WHERE id = ?`, id)
+	return err
+}
+
+func (r *TaskRepository) FindByStatus(done bool) ([]model.Task, error) {
+	rows, err := r.db.Query(`SELECT id, title, done, created_at FROM tasks WHERE done = ?`, done)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var tasks []model.Task
+	for rows.Next() {
+		var t model.Task
+		if err := rows.Scan(&t.ID, &t.Title, &t.Done, &t.CreatedAt); err != nil {
+			return nil, err
+		}
+		tasks = append(tasks, t)
+	}
+	return tasks, nil
+	
+}

@@ -7,8 +7,10 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/nathanfabio/level1-todoApi/internal/config/jwt"
 	"github.com/nathanfabio/level1-todoApi/internal/model"
 	"github.com/nathanfabio/level1-todoApi/internal/repository"
+	"github.com/nathanfabio/level1-todoApi/pkg/db"
 )
 
 type statusUpdate struct {
@@ -112,5 +114,65 @@ func (h *TaskHandler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+}
+
+func (h *TaskHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
+	var user model.User
+
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	if user.Email == "" || user.Password == "" {
+		http.Error(w, "Email and password required ", http.StatusBadRequest)
+		return
+	}
+
+	query := "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING id, created_at"
+	err := db.Connect().QueryRow(query, user.Email, user.Password).Scan(&user.ID, &user.CreatedAt)
+	if err != nil {
+		http.Error(w, "Failed to register user", http.StatusInternalServerError)
+		log.Printf("Error registering user: %v", err)
+		return
+	}
+
+	user.Password = ""
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
+}
+
+func (h *TaskHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
+	var login model.User
+
+	err := json.NewDecoder(r.Body).Decode(&login)
+	if err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	var user model.User
+	query := "SELECT id, email, password, created_at FROM users WHERE email = ?"
+	err = db.Connect().Get(&user, query, login.Email)
+	if err != nil {
+		http.Error(w, "User not found", http.StatusUnauthorized)
+		return
+	}
+
+	//I'll use a simple password check for now, but in the future, I'll use bcrypt
+	if user.Password != login.Password {
+		http.Error(w, "Invalid password", http.StatusUnauthorized)
+		return
+	}
+
+	token, err := jwt.GenerateJWT(user.ID, user.Email)
+	if err != nil {
+		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"token": token})
 }
 

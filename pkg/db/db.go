@@ -13,14 +13,19 @@ func Connect() *sqlx.DB {
 		log.Fatal("Failed to connect to database:", err)
 	}
 
-	
-
-	schema := `CREATE TABLE IF NOT EXISTS tasks (
+	taksSchema := `CREATE TABLE IF NOT EXISTS tasks (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		title TEXT NOT NULL,
 		done BOOLEAN NOT NULL DEFAULT false,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP);`
 
-	db.MustExec(schema)
+	userSchema := `CREATE TABLE IF NOT EXISTS users (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		email TEXT NOT NULL UNIQUE,
+		password TEXT NOT NULL,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP);`
+
+	db.MustExec(taksSchema)
+	db.MustExec(userSchema)
 	return db
 }

@@ -23,6 +23,8 @@ func main() {
 		w.Write([]byte("pong"))
 	})
 
+	r.Post("/register", taskHandler.RegisterHandler)
+	r.Post("/login", taskHandler.LoginHandler)
 	r.Post("/tasks", taskHandler.CreateTask)
 	r.Get("/tasks", taskHandler.ListTasks)
 	r.Put("/tasks/{id}/status", taskHandler.UpdateTaskStatus)
